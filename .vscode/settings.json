@@ -1,0 +1,21 @@
+{
+    "files.autoSave": "onFocusChange",
+    "cmake.configureOnOpen": true,
+    "cmake.generator": "Ninja",
+    "cmake.debugConfig": {
+        "console":"externalTerminal"
+    },
+    "editor.fontSize": 14,
+    "editor.fontFamily": "'Jetbrains Mono', 'Jetbrains Mono', 'Jetbrains Mono'",
+    "editor.inlayHints.enabled": "off",
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "clangd.arguments": [
+        "--clang-tidy",
+        "-j=4",
+        "--pch-storage=memory",
+        "--compile-commands-dir=build",
+        "--background-index",
+        "--ranking-model=heuristics",
+        //"--query-driver=/usr/bin/g++"
+    ]
+}
