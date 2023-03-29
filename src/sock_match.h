@@ -23,8 +23,8 @@ namespace transfer {
         // parse all message
         void parse();
     private:
-        std::list<one_connect>      m_allcon;
-        data_buffer_v1<char>           m_allMessage;
+        std::list<one_connect>          m_allcon;
+        data_buffer_v1<char>            m_allMessage;
     };
 }
 

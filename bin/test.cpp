@@ -1,6 +1,9 @@
+#include <chrono>
+#include <cstdio>
 #include <cstring>
 #include <iostream>
 #include "trans_buffer.hpp"
+#include <thread>
 
 using namespace transfer;
 
@@ -31,25 +34,38 @@ void gcall(data_buffer_v2<char>& buffer) {
     char data[128] = "";
     std::memcpy(&data, buffer.getPtr(), buffer.getcur());
     buffer.popData(buffer.getcur());
-    std::cout << "Done" << std::endl;
+    std::cout << data << std::endl;
 }
+
+
+
+data_buffer_v2<char> data;
 
 void test2() {
 
-    g_call = gcall;
     char data1[128] = {"Transfer."};
-    data_buffer_v2<char> data;
 
-    data.allocMem(256);
-    data.registerCall(g_call);
+    int i = 0;
+    while (++i < 100) {
 
-    data.pushData(data1, std::strlen(data1));
-
+        std::snprintf(data1, 128, "%s %d", "Tansfer", i);
+        data.pushData(data1, std::strlen(data1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
 }
 
 int main() {
 
-    test2();
+    g_call = gcall;
+    data.allocMem(256);
+    data.registerCall(g_call);
+
+    std::thread t(test2);
+
+
+    t.join();
+
+    std::cout << "Buffer当前的游标: " << data.getcur() << std::endl;
 
     return 0;
 }
