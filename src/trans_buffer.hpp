@@ -2,7 +2,9 @@
 #define _TS_BUFFER_HEADER
 
 #include <cstddef>
+#include <cstdlib>
 #include <cstring>
+#include <functional>
 
 namespace transfer {
 
@@ -31,10 +33,10 @@ namespace transfer {
                 return false;
             }
             m_pData = new T[nSize];
-            std::memset(m_pData, 0x0, sizeof(T) * nSize);
             if (!m_pData) {
                 return false;
             }
+            std::memset(m_pData, 0x0, sizeof(T) * nSize);
             m_nSize = nSize;
             m_realSize = nSize;
             reset();
@@ -119,12 +121,110 @@ namespace transfer {
     template<typename T>
     class data_buffer_v2 {
     public:
-        data_buffer_v2()
+        data_buffer_v2() :
+            m_pData(nullptr)
         {
 
         }
+        ~data_buffer_v2() {
+
+        }
+    public:
+        //
+        bool allocMem(std::size_t nSize) {
+
+            freeMem();
+            if (nSize < 1) {
+                return false;
+            }
+            m_pData = new T[nSize];
+            if (!m_pData) {
+                return false;
+            }
+            std::memset(m_pData, 0x0, sizeof(T) * nSize);
+            reset();
+            m_nSize = nSize;
+            return true;
+        }
+        //
+        bool rellocMem(std::size_t nSize) {
+
+            if (nSize <= m_nSize) {
+                return true;
+            }
+            m_pData = (T *)std::realloc(m_pData, nSize);
+            if (!m_pData) {
+                return false;
+            }
+            m_nSize = nSize;
+            return true;
+        }
+        // 
+        void popData(std::size_t nOffset) {
+
+            if (nOffset > m_nSize) {
+                return ;
+            }
+            std::memmove(m_pData, m_pData + nOffset * sizeof(T), (m_nCur - nOffset) * sizeof(T)); 
+            m_nCur -= nOffset;
+        }
+        //
+        bool pushData(const T* pData, std::size_t nSize) {
+
+            if (!m_pData) {
+                return false;
+            }
+            std::size_t purposeSize = m_nCur + nSize;
+            if (purposeSize > m_nSize) {
+                if (!rellocMem(purposeSize)) {
+                    return false;
+                }
+                m_nSize = purposeSize;
+            }
+            std::memcpy(m_pData + m_nCur * sizeof(T), pData, nSize);
+            m_nCur += nSize;
+            
+            if (m_usercall) {
+                m_usercall(*this);
+            }
+            return true;
+        }
+        // register callback
+        void registerCall(std::function<void(data_buffer_v2&)> call) {
+
+            m_usercall = call;
+        }
+        // clear callback
+        void clearCall() {
+
+            m_usercall = nullptr;
+        }
+        //
+        const std::size_t& getcur() const {
+
+            return m_nCur;
+        }
+        //
+        const void* getPtr() const {
+
+            return (void *)m_pData;
+        }
     private:
-        
+        // reset cursor
+        void reset() {
+            m_nCur = 0;
+        }
+        // free memory
+        void freeMem() {
+            delete [] m_pData;
+            m_pData = nullptr;
+        }
+    private:
+        T*              m_pData;
+        std::size_t     m_nCur;
+        std::size_t     m_nSize;
+    private:
+        std::function<void(data_buffer_v2&)>  m_usercall;
     };
 }
 
